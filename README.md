@@ -1,5 +1,13 @@
 # AWSPrice: AWS Pricing via a simple grammar
 
+## Installation
+
+You should be able to
+
+	go get -u github.com/jbarratt/awsprice/...
+
+and end up with an `awsprice` binary. (Which, as of now, has very limited functionality.)
+
 ## Goals
 
 Make it quick and easy to figure out prices for AWS configurations.
@@ -9,6 +17,8 @@ This is done via a simple grammar, like
 ```
 $ awsprice '2 * m4.xlarge + db.t2.medium(engine=mariadb) + elb(transfer=500GB)'
 ```
+
+(Warning, not yet implemented.)
 
 The goal is to have a common engine power potentially a few different interfaces:
 
