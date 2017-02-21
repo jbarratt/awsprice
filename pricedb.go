@@ -1,11 +1,16 @@
 package awsprice
 
 import (
+	"bytes"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 // PriceAttr captures all the supported variables that impact a price
@@ -18,6 +23,40 @@ type PriceAttr struct {
 type PriceData struct {
 	Price   float64
 	Product EC2Attr
+}
+
+type PriceList []PriceData
+
+// String returns a simple string version of the pricing
+func (pd PriceData) String() string {
+	return fmt.Sprintf("$%0.3f /hr, $%0.2f /mo", pd.Price, pd.Price*730)
+}
+
+func (slice PriceList) Len() int {
+	return len(slice)
+}
+
+func (slice PriceList) Less(i, j int) bool {
+	return slice[i].Price < slice[j].Price
+}
+
+func (slice PriceList) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+// Table returns a stringified table of all the results
+func PriceTable(pl PriceList) string {
+	var b bytes.Buffer
+	table := tablewriter.NewWriter(&b)
+	table.SetHeader([]string{"type", "vCPU", "Mem", "$/hr", "$/mo"})
+
+	sort.Sort(pl)
+
+	for _, pd := range pl {
+		table.Append([]string{pd.Product.InstanceType, pd.Product.VCPU, pd.Product.Memory, fmt.Sprintf("$%0.3f", pd.Price), fmt.Sprintf("$%0.2f", pd.Price*730)})
+	}
+	table.Render()
+	return b.String()
 }
 
 // Pricer is a standard interface for price lookups. Given a name and
@@ -66,7 +105,7 @@ func (ep *SimplePrices) Get(name string, attr PriceAttr) (PriceData, error) {
 
 // Search returns a slice of all matching PriceData
 func (ep *SimplePrices) Search(name string, attr PriceAttr) []PriceData {
-	results := make([]PriceData, 6)
+	results := make([]PriceData, 0, 6)
 	for key, val := range *ep {
 		if strings.Contains(key, name) {
 			if price, ok := val.Prices[attr]; ok {
