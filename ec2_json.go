@@ -11,13 +11,13 @@ type EC2OfferIndex struct {
 
 // EC2Product identifies a single product 'leaf' in the JSON document
 type EC2Product struct {
-	SKU           string               `json:"sku"`
-	ProductFamily string               `json:"productFamily"`
-	Attr          EC2ProductAttributes `json:"attributes"`
+	SKU           string  `json:"sku"`
+	ProductFamily string  `json:"productFamily"`
+	Attr          EC2Attr `json:"attributes"`
 }
 
-// EC2ProductAttributes identifies a selected list of useful attributes
-type EC2ProductAttributes struct {
+// EC2Attr identifies a selected list of useful attributes
+type EC2Attr struct {
 	ServiceCode       string `json:"servicecode"`
 	Location          string `json:"location"`
 	LocationType      string `json:"locationType"`

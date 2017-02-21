@@ -65,7 +65,7 @@ func ProcessJSON() {
 			log.Printf("Unable to get price for %s: %s\n", instance, err)
 			continue
 		}
-		err = instancePrice.Set(instance, PriceAttr{}, price)
+		err = instancePrice.Set(instance, p.Attr, PriceAttr{}, price)
 		if err != nil {
 			log.Printf("Unable to store instance price: %v\n", err)
 			continue

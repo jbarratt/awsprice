@@ -9,5 +9,5 @@ func ParseInput(pricer Pricer, input string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("$%0.3f /hr, $%0.2f /mo", price, price*730), nil
+	return fmt.Sprintf("$%0.3f /hr, $%0.2f /mo", price.Price, price.Price*730), nil
 }
