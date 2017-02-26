@@ -16,6 +16,8 @@ func main() {
 		awsprice.FetchJSON()
 	} else if os.Args[1] == "process" {
 		awsprice.ProcessJSON()
+	} else if os.Args[1] == "help" {
+		fmt.Printf("fetch: fetch new pricing data\nprocess: rebuild local pricing db\nhelp: you're looking at it\nAnything else: a pricing string to interpret\n")
 	} else {
 		pricer, err := awsprice.LoadSimplePrices()
 		if err != nil {

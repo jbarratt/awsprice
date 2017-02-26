@@ -8,9 +8,8 @@ func ParseInput(pricer Pricer, input string) (string, error) {
 		prices := pricer.Search(input, PriceAttr{})
 		if len(prices) == 0 {
 			return "", err
-		} else {
-			return PriceTable(prices), nil
 		}
+		return PriceTable(prices), nil
 
 	}
 	return price.String(), nil

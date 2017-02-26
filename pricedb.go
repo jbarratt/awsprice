@@ -25,6 +25,7 @@ type PriceData struct {
 	Product EC2Attr
 }
 
+// PriceList is a slice of prices
 type PriceList []PriceData
 
 // String returns a simple string version of the pricing
@@ -44,7 +45,7 @@ func (slice PriceList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-// Table returns a stringified table of all the results
+// PriceTable returns a stringified table of all the results
 func PriceTable(pl PriceList) string {
 	var b bytes.Buffer
 	table := tablewriter.NewWriter(&b)

@@ -44,9 +44,9 @@ Internally, it goes through a few phases:
 	* awsprice process (optional -o 'db file') ✔
 * Simple lookup of EC2 information (only single region, no options) ✔
 	* via CLI ✔
-	* With wildcard matching
-	* initial slackbot deploy (with cached data)
-	* 'help'
+	* With wildcard matching ✔
+	* initial slackbot deploy (with cached data) ✔ ([awspricebot|http://github.com/jbaratt/awspricebot])
+	* 'help' ✔
 * Additional EC2 demensions (region, OS)
 * Basic calculator support (+, -, parenthesis grouping)
 * EBS support
@@ -57,6 +57,7 @@ Internally, it goes through a few phases:
 * EC2 Transit support
 * S3 transit support
 * 'vs' operator (comparing 2 stacks with each other)
+
 
 # Internal Architecture
 
