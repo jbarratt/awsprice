@@ -15,7 +15,7 @@ import (
 
 // PriceAttr captures all the supported variables that impact a price
 type PriceAttr struct {
-	Region string
+	Region Region
 }
 
 // PriceData returns information about the product

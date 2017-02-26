@@ -4,8 +4,11 @@ package awsprice
 // a string representation of the price
 func ParseInput(pricer Pricer, input string) (string, error) {
 	price, err := pricer.Get(input, PriceAttr{})
+	// default region
+	region, _ := NewRegion("us-west-2")
+	attr := PriceAttr{Region: region}
 	if err != nil {
-		prices := pricer.Search(input, PriceAttr{})
+		prices := pricer.Search(input, attr)
 		if len(prices) == 0 {
 			return "", err
 		}

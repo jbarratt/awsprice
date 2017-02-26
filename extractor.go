@@ -41,37 +41,35 @@ func ProcessJSON() {
 		log.Printf("Unable to parse EC2 offer file: %v\n", err)
 		os.Exit(1)
 	}
-	// for now, pick simple region/attributes
-	instanceTypes := make(map[string]EC2Product)
-	for _, p := range offerIndex.Products {
-		if p.Attr.Location == "US West (Oregon)" && p.Attr.OperatingSystem == "Linux" && p.Attr.Tenancy == "Shared" {
-			if val, ok := instanceTypes[p.Attr.InstanceType]; ok {
-				log.Printf("Duplicate instance type: %+v\n %+v\n", val, p)
-			} else {
-				instanceTypes[p.Attr.InstanceType] = p
-			}
-		}
-	}
-	// for each instance, find a simple hourly price
+	// Right now, locked to Linux/Shared
 	instancePrice := NewSimplePrices()
-	for instance, p := range instanceTypes {
+	for _, p := range offerIndex.Products {
+		if !(p.Attr.OperatingSystem != "Linux" && p.Attr.Tenancy == "Shared") {
+			continue
+		}
+		region, err := NewRegion(p.Attr.Location)
+		if err != nil {
+			log.Printf("Region %s is unknown\n", p.Attr.Location)
+			continue
+		}
+		// p.Attr.InstanceType (c4.xlarge)
 		terms, ok := offerIndex.Terms.OnDemand[p.SKU]
 		if !ok {
-			log.Printf("No offers found for %s @ SKU=%s\n", instance, p.SKU)
+			log.Printf("No offers found for %s @ SKU=%s\n", p.Attr.InstanceType, p.SKU)
 			continue
 		}
 		price, err := simplePrice(terms)
 		if err != nil {
-			log.Printf("Unable to get price for %s: %s\n", instance, err)
+			log.Printf("Unable to get price for %s: %s\n", p.Attr.InstanceType, err)
 			continue
 		}
-		err = instancePrice.Set(instance, p.Attr, PriceAttr{}, price)
+		err = instancePrice.Set(p.Attr.InstanceType, p.Attr, PriceAttr{Region: region}, price)
 		if err != nil {
 			log.Printf("Unable to store instance price: %v\n", err)
 			continue
 		}
 	}
-	// fmt.Printf("%s: $%.3f/hr, $%.2f/mo\n", instance, instancePrice[instance], instancePrice[instance]*730)
+
 	err = instancePrice.save()
 	if err != nil {
 		log.Printf("Unable to save summary DB: %s\n", err)
