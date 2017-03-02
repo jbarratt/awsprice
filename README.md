@@ -23,7 +23,7 @@ $ awsprice '2 * m4.xlarge + db.t2.medium(engine=mariadb) + elb(transfer=500GB)'
 The goal is to have a common engine power potentially a few different interfaces:
 
 * A command line tool `$ awsprice c3.xlarge`
-* A slackbot slash command `/awsprice ebs(500G)`
+* A slackbot: `@awsprice ebs(500G)`
 * A single page webapp, with pretty/shareable HTML results
 
 ## Implementation
@@ -47,7 +47,8 @@ Internally, it goes through a few phases:
 	* With wildcard matching ✔
 	* initial slackbot deploy (with cached data) ✔ ([awspricebot|http://github.com/jbaratt/awspricebot])
 	* 'help' ✔
-* Additional EC2 demensions (region, OS)
+* Additional EC2 demension (region)
+* Basic RDS
 * Basic calculator support (+, -, parenthesis grouping)
 * EBS support
 * ELB support (including data transfer)
@@ -57,23 +58,61 @@ Internally, it goes through a few phases:
 * EC2 Transit support
 * S3 transit support
 * 'vs' operator (comparing 2 stacks with each other)
+* EC2 OS
 
 
 # Internal Architecture
 
-The CLI will need to have a fetch/process method to call.
-Implicit command will be to consider argv[1] as string.
+At the top level, the parser will identify an 'Offer' token, with a set of optional k=v arguments.
 
-For the first pass, if the db is not available, run a fetch/process to make it
-Check the db for a string.
+	db.r3.xlarge(engine=mariadb)
 
-This should use a 'OfferLookup' interface.
+There is a high level dispatch table:
+	- given an identifier name
+	- return the offer type
 
-takes a String & optional map[string]string of attributes
+The dispatch table will then call the proper `New{}Offer` method, passing the arguments in.
+It will 'mix in' any of the global arguments, as well. For example
 
-returns something implementing the Offer interface
+	2 x m4.xlarge(os=Windows)  region=us-west-1
 
-float hourly() # USD/hr
-string Name
-string OfferType
+would 
+
+* Look up m4.xlarge and discover it's an EC2 type
+* Construct a new EC2Offer, with {'os': 'Windows', 'region': 'us-west-1'} as arguments
+
+	type OfferType int
+	const (
+		EC2 OfferType = iota
+		RDS
+	)
+
+	// when a new one is added link it in here
+	map[string]OfferType
+
+	// and construct a NewEC2OfferParam(k_v)
+	EC2OfferParam {
+		Name
+		Region
+		Os
+	}
+	map[EC2OfferParam]EC2Offer
+	EC2Offer
+
+
+The Offers all implement the Offer interface, which has some standard methods
+
+	Type() string
+	Description() string
+	Hourly() float64
+
+This allows them to be displayed & totaled as needed.
+
+	StoreEC2(name string, params map[string]string, EC2Offer)
+	StoreRDS(name string, params map[string]string, RDSOffer)
+	Load(name string, params map[string]string) Offer
+	Search(name string, params map[string]string) []Offer
+
+
+
 

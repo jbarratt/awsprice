@@ -24,14 +24,14 @@ func init() {
 // OfferIndex contains the top level information about the various Offers
 // aka Amazon Service families
 type OfferIndex struct {
-	FormatVersion   string           `json:"formatVersion"`
-	Disclaimer      string           `json:"disclaimer"`
-	PublicationDate string           `json:"publicationDate"`
-	Offers          map[string]Offer `json:"offers"`
+	FormatVersion   string               `json:"formatVersion"`
+	Disclaimer      string               `json:"disclaimer"`
+	PublicationDate string               `json:"publicationDate"`
+	Offers          map[string]JSONOffer `json:"offers"`
 }
 
-// Offer identifies a singular Offer File for a given service
-type Offer struct {
+// JSONOffer identifies a singular Offer File for a given service
+type JSONOffer struct {
 	OfferCode         string `json:"offerCode"`
 	VersionIndexURL   string `json:"versionIndexUrl"`
 	CurrentVersionURL string `json:"currentVersionUrl"`

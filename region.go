@@ -5,6 +5,8 @@ import "fmt"
 // Region is a type identifying AWS Regions.
 type Region string
 
+var defaultRegion Region
+
 var codeToRegion map[string]string
 var regionToCode map[string]string
 
@@ -29,6 +31,8 @@ func init() {
 	for region, code := range regionToCode {
 		codeToRegion[code] = region
 	}
+	// TODO have this use the AWS_DEFAULT_REGION env var
+	defaultRegion, _ = NewRegion("us-west-2")
 }
 
 // NewRegion returns a region type for any valid AWS region identifier

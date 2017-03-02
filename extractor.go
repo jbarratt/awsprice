@@ -42,17 +42,14 @@ func ProcessJSON() {
 		os.Exit(1)
 	}
 	// Right now, locked to Linux/Shared
-	instancePrice := NewSimplePrices()
+	priceDB := NewPriceDB()
 	for _, p := range offerIndex.Products {
 		if !(p.Attr.OperatingSystem != "Linux" && p.Attr.Tenancy == "Shared") {
 			continue
 		}
-		region, err := NewRegion(p.Attr.Location)
-		if err != nil {
-			log.Printf("Region %s is unknown\n", p.Attr.Location)
+		if p.Attr.Location == "AWS GovCloud (US)" {
 			continue
 		}
-		// p.Attr.InstanceType (c4.xlarge)
 		terms, ok := offerIndex.Terms.OnDemand[p.SKU]
 		if !ok {
 			log.Printf("No offers found for %s @ SKU=%s\n", p.Attr.InstanceType, p.SKU)
@@ -63,14 +60,16 @@ func ProcessJSON() {
 			log.Printf("Unable to get price for %s: %s\n", p.Attr.InstanceType, err)
 			continue
 		}
-		err = instancePrice.Set(p.Attr.InstanceType, p.Attr, PriceAttr{Region: region}, price)
+
+		offer := EC2Offer{Price: price, Product: p.Attr}
+		err = priceDB.StoreEC2(p.Attr.InstanceType, map[string]string{"region": p.Attr.Location}, offer)
 		if err != nil {
 			log.Printf("Unable to store instance price: %v\n", err)
 			continue
 		}
 	}
 
-	err = instancePrice.save()
+	err = priceDB.save()
 	if err != nil {
 		log.Printf("Unable to save summary DB: %s\n", err)
 	}
