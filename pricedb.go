@@ -27,64 +27,6 @@ const (
 	EBS
 )
 
-// EC2Offer The product/price details for a given EC2 Offering
-type EC2Offer struct {
-	Product EC2Attr
-	Price   float64
-}
-
-// Name returns the EC2 instance type
-func (eo EC2Offer) Name() string {
-	return eo.Product.InstanceType
-}
-
-// HourlyPrice returns the fractional dollars per hour
-func (eo EC2Offer) HourlyPrice() float64 {
-	return eo.Price
-}
-
-// Type always returns EC2
-func (eo EC2Offer) Type() OfferType {
-	return EC2
-}
-
-// EC2OfferParam stores the unique factors that determine an EC2 Offer
-type EC2OfferParam struct {
-	Region Region
-	Name   string
-}
-
-// NewEC2OfferParam constructs an EC2 offer from a name & attributes
-func NewEC2OfferParam(name string, attr map[string]string) (EC2OfferParam, error) {
-	offerParams := &EC2OfferParam{Name: name}
-	if region, ok := attr["region"]; ok {
-		reg, err := NewRegion(region)
-		if err != nil {
-			return *offerParams, err
-		}
-		offerParams.Region = reg
-	} else {
-		offerParams.Region = defaultRegion
-	}
-	return *offerParams, nil
-}
-
-// String returns a simple string version of the pricing
-func (eo EC2Offer) String() string {
-	return fmt.Sprintf("$%0.3f /hr, $%0.2f /mo", eo.HourlyPrice(), eo.HourlyPrice()*HoursPerMonth)
-}
-
-// Columns returns a slice of the column names for this type
-func (eo EC2Offer) Columns() []string {
-	return []string{"type", "vCPU", "Mem", "$/hr", "$/mo"}
-}
-
-// RowData returns data for this item for tablular presentation
-// Should be used in concert with Columns
-func (eo EC2Offer) RowData() []string {
-	return []string{eo.Product.InstanceType, eo.Product.VCPU, eo.Product.Memory, fmt.Sprintf("$%0.3f", eo.Price), fmt.Sprintf("$%0.2f", eo.Price*HoursPerMonth)}
-}
-
 // OfferList is a slice of Offers
 type OfferList []Offer
 
@@ -143,6 +85,7 @@ type Offer interface {
 // hourly price
 type Pricer interface {
 	StoreEC2(name string, attr map[string]string, offer EC2Offer) error
+	StoreRDS(name string, attr map[string]string, offer RDSOffer) error
 	Get(name string, attr map[string]string) (Offer, error)
 	Search(name string, attr map[string]string) []Offer
 }
@@ -154,9 +97,10 @@ type PriceDB struct {
 	// OfferLookup maps a name (like 'm4.xlarge') to a type (EC2)
 	OfferLookup map[string]OfferType
 	EC2         map[EC2OfferParam]EC2Offer
+	RDS         map[RDSOfferParam]RDSOffer
 }
 
-const summaryDBFile = "_SummaryDB.gob"
+const summaryDBFile = "_SummaryDB_v0.2.gob"
 
 // StoreEC2 sets a value (with optional attributes) to a given hourly price
 func (pd *PriceDB) StoreEC2(name string, attr map[string]string, offer EC2Offer) error {
@@ -168,6 +112,19 @@ func (pd *PriceDB) StoreEC2(name string, attr map[string]string, offer EC2Offer)
 		return err
 	}
 	(*pd).EC2[offerParam] = offer
+	return nil
+}
+
+// StoreRDS sets a value (with optional attributes) to a given hourly price
+func (pd *PriceDB) StoreRDS(name string, attr map[string]string, offer RDSOffer) error {
+
+	// register this name as an EC2 type.
+	pd.OfferLookup[name] = RDS
+	offerParam, err := NewRDSOfferParam(name, attr)
+	if err != nil {
+		return err
+	}
+	(*pd).RDS[offerParam] = offer
 	return nil
 }
 
@@ -188,7 +145,16 @@ func (pd *PriceDB) Get(name string, attr map[string]string) (Offer, error) {
 		if ec2Offer, ok := (*pd).EC2[offerParam]; ok {
 			return ec2Offer, nil
 		}
-		return nil, fmt.Errorf("No matching records found")
+		return nil, fmt.Errorf("No matching EC2 records found")
+	case RDS:
+		offerParam, err := NewRDSOfferParam(name, attr)
+		if err != nil {
+			return nil, err
+		}
+		if rdsOffer, ok := (*pd).RDS[offerParam]; ok {
+			return rdsOffer, nil
+		}
+		return nil, fmt.Errorf("No matching RDS records found")
 	}
 	return nil, errors.New("Pricing data not found")
 }
@@ -245,5 +211,6 @@ func NewPriceDB() *PriceDB {
 	db := PriceDB{}
 	db.OfferLookup = make(map[string]OfferType)
 	db.EC2 = make(map[EC2OfferParam]EC2Offer)
+	db.RDS = make(map[RDSOfferParam]RDSOffer)
 	return &db
 }

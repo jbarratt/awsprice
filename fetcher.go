@@ -94,10 +94,16 @@ func processOfferJSON() {
 		os.Exit(1)
 	}
 
-	// TODO make this somewhere DRY
+	// TODO paralellize
 	err = fetchOfferFile(offerIndex.Offers["AmazonEC2"].CurrentVersionURL, "AmazonEC2.json")
 	if err != nil {
 		log.Printf("Failed to download EC2 offer: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = fetchOfferFile(offerIndex.Offers["AmazonRDS"].CurrentVersionURL, "AmazonRDS.json")
+	if err != nil {
+		log.Printf("Failed to download RDS offer: %v\n", err)
 		os.Exit(1)
 	}
 }

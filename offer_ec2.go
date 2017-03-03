@@ -1,5 +1,7 @@
 package awsprice
 
+import "fmt"
+
 // EC2OfferIndex is at the root of the EC2 Offer JSON document
 type EC2OfferIndex struct {
 	FormatVersion   string                `json:"formatVersion"`
@@ -49,4 +51,62 @@ type EC2PriceDimensions struct {
 	Description  string            `json:"description"`
 	Unit         string            `json:"unit"`
 	PricePerUnit map[string]string `json:"pricePerUnit"`
+}
+
+// EC2Offer The product/price details for a given EC2 Offering
+type EC2Offer struct {
+	Product EC2Attr
+	Price   float64
+}
+
+// Name returns the EC2 instance type
+func (eo EC2Offer) Name() string {
+	return eo.Product.InstanceType
+}
+
+// HourlyPrice returns the fractional dollars per hour
+func (eo EC2Offer) HourlyPrice() float64 {
+	return eo.Price
+}
+
+// Type always returns EC2
+func (eo EC2Offer) Type() OfferType {
+	return EC2
+}
+
+// EC2OfferParam stores the unique factors that determine an EC2 Offer
+type EC2OfferParam struct {
+	Region Region
+	Name   string
+}
+
+// NewEC2OfferParam constructs an EC2 offer from a name & attributes
+func NewEC2OfferParam(name string, attr map[string]string) (EC2OfferParam, error) {
+	offerParams := &EC2OfferParam{Name: name}
+	if region, ok := attr["region"]; ok {
+		reg, err := NewRegion(region)
+		if err != nil {
+			return *offerParams, err
+		}
+		offerParams.Region = reg
+	} else {
+		offerParams.Region = defaultRegion
+	}
+	return *offerParams, nil
+}
+
+// String returns a simple string version of the pricing
+func (eo EC2Offer) String() string {
+	return fmt.Sprintf("$%0.3f /hr, $%0.2f /mo", eo.HourlyPrice(), eo.HourlyPrice()*HoursPerMonth)
+}
+
+// Columns returns a slice of the column names for this type
+func (eo EC2Offer) Columns() []string {
+	return []string{"type", "vCPU", "Mem", "$/hr", "$/mo"}
+}
+
+// RowData returns data for this item for tablular presentation
+// Should be used in concert with Columns
+func (eo EC2Offer) RowData() []string {
+	return []string{eo.Product.InstanceType, eo.Product.VCPU, eo.Product.Memory, fmt.Sprintf("$%0.3f", eo.Price), fmt.Sprintf("$%0.2f", eo.Price*HoursPerMonth)}
 }
