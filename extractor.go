@@ -53,7 +53,10 @@ func extractEC2(priceDB *PriceDB) {
 	}
 	// Right now, locked to Linux/Shared
 	for _, p := range offerIndex.Products {
-		if !(p.Attr.OperatingSystem != "Linux" && p.Attr.Tenancy == "Shared") {
+		if p.Attr.OperatingSystem != "Linux" {
+			continue
+		}
+		if p.Attr.Tenancy != "Shared" {
 			continue
 		}
 		if p.Attr.Location == "AWS GovCloud (US)" {

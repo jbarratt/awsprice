@@ -31,7 +31,7 @@ func main() {
 				panic(err)
 			}
 		}
-		value, err := awsprice.ParseInput(*pricer, os.Args[1])
+		value, err := awsprice.ParseInput(pricer, os.Args[1])
 		if err != nil {
 			fmt.Printf("Unable to find a price for '%s'\n", os.Args[1])
 			os.Exit(1)
