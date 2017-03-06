@@ -47,7 +47,7 @@ Internally, it goes through a few phases:
 	* With wildcard matching ✔
 	* initial slackbot deploy (with cached data) ✔ ([awspricebot|http://github.com/jbaratt/awspricebot])
 	* 'help' ✔
-* Additional EC2 demension (region)
+* Additional EC2 dimensions (region)
 * Basic RDS
 * Basic calculator support (+, -, parenthesis grouping)
 * EBS support
